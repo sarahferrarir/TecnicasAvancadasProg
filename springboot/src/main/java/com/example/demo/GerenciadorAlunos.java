@@ -38,7 +38,6 @@ public class GerenciadorAlunos {
              Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT matricula, nome FROM alunos")) {
 
-            // Preenche a lista com os resultados do banco
             while (rs.next()) {
                 listaAlunos.add(new Aluno(rs.getString("matricula"), rs.getString("nome")));
             }
@@ -48,6 +47,73 @@ public class GerenciadorAlunos {
             throw new RuntimeException("Erro ao buscar alunos", e);
         }
 
-        return listaAlunos; // Retorna os dados ao invés de imprimir
+        return listaAlunos;
+    }
+
+    public void atualizar(String matriculav, String novoNome) {
+        String updateSql = "UPDATE alunos SET nome = ? WHERE matricula = ?";
+
+        try (Connection connection = conexao();
+             PreparedStatement preparedStatement = connection.prepareStatement(updateSql)) {
+
+            preparedStatement.setString(1, novoNome);
+            preparedStatement.setString(2, matriculav);
+
+            int linhasAfetadas = preparedStatement.executeUpdate();
+
+            if (linhasAfetadas == 0) {
+                System.out.println("Nenhum aluno encontrado com a matrícula: " + matriculav);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao atualizar aluno", e);
+        }
+    }
+
+    public void deletar(String matriculav) {
+        String deleteSql = "DELETE FROM alunos WHERE matricula = ?";
+
+        try (Connection connection = conexao();
+             PreparedStatement preparedStatement = connection.prepareStatement(deleteSql)) {
+
+            preparedStatement.setString(1, matriculav);
+
+            int linhasAfetadas = preparedStatement.executeUpdate();
+
+            if (linhasAfetadas == 0) {
+                System.out.println("Nenhum aluno encontrado com a matrícula: " + matriculav);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao deletar aluno", e);
+        }
+    }
+
+    public Aluno buscarPorMatricula(String matriculav) {
+        String selectSql = "SELECT matricula, nome FROM alunos WHERE matricula = ?";
+        Aluno alunoEncontrado = null; // Começa vazio
+
+        try (Connection connection = conexao();
+             PreparedStatement preparedStatement = connection.prepareStatement(selectSql)) {
+
+            preparedStatement.setString(1, matriculav);
+
+            try (ResultSet rs = preparedStatement.executeQuery()) {
+                if (rs.next()) {
+                    String matriculaBanco = rs.getString("matricula");
+                    String nomeBanco = rs.getString("nome");
+
+                    alunoEncontrado = new Aluno(matriculaBanco, nomeBanco);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao buscar aluno por matrícula", e);
+        }
+
+        return alunoEncontrado;
     }
 }
